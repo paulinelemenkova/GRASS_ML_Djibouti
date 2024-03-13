@@ -92,54 +92,84 @@ r.colors shaded_relief1 color=grey
 # Mapping
 g.region raster=L_2023_01 -p
 d.mon wx0
-d.rast shaded_relief1
+d.rast shaded_relief
 d.vect isolines color='100:93:134' width=0
 d.rast L_2023_clusters
 d.grid -g size=00:30:00 color=white width=0.1 fontsize=16 text_color=white
-d.legend raster=L_2023_clusters title="Clusters 2019" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white
-d.legend raster=shaded_relief1 title="Relief, m" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white -f
-d.out.file output=Djibouti_2019 format=jpg --overwrite
+d.legend raster=L_2023_clusters title="Clusters 2023" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white
+d.legend raster=shaded_relief title="Relief, m" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white -f
+d.out.file output=Djibouti_2023 format=jpg --overwrite
 #
 # Mapping rejection probability
 d.mon wx2
 g.region raster=L_2023_clusters -p
 r.colors L_2023_cluster_reject color=soilmoisture -e
-d.rast shaded_relief1
+d.rast shaded_relief
 d.vect isolines color='100:93:134' width=0
 d.rast L_2023_cluster_reject
 d.grid -g size=00:30:00 color=white width=0.1 fontsize=16 text_color=white
-d.legend raster=L_2023_cluster_reject title="2019" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white
-d.legend raster=shaded_relief1 title="Relief, m" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white -f
-d.out.file output=Djibouti_2019_reject format=jpg --overwrite
+d.legend raster=L_2023_cluster_reject title="2023" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white
+d.legend raster=shaded_relief title="Relief, m" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white -f
+d.out.file output=Djibouti_2023_reject format=jpg --overwrite
+
+# ----------------- RENAMING CLASSES ------------------->
+echo "
+1 = 1 water
+2 = 1 water
+3 = 2 herbaceous vegetation
+4 = 3 shrubland
+5 = 4 artificial surface
+6 = 5 consolidated land
+7 = 6 grassland
+8 = 7 sparse vegetation
+9 = 8 cropland
+10 = 9 mosaic shrubland" > landusereclass.txt
+
+r.reclass input=L_2023_clusters output=L_2023_reclass \
+  rules=landusereclass.txt \
+  title="LCC 2023"
+  
+r.category L_2023_reclass
+
+# Mapping reclass
+d.mon wx2
+g.region raster=L_2023_reclass -p
+r.colors L_2023_reclass color=bcyr -e
+d.rast shaded_relief
+d.vect isolines color='100:93:134' width=0
+d.rast L_2023_reclass
+d.grid -g size=00:30:00 color=white width=0.1 fontsize=16 text_color=white
+d.legend raster=L_2015_reclass title="Reclass 2023" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white
+d.legend raster=shaded_relief title="Relief, m" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white -f
+d.out.file output=Djibouti_2023_reclass format=jpg --overwrite
 #
 # --------------------- MACHINE LEARNING ------------------------>
 #
 # Generating training pixels from an older (1996) land cover classification:
-r.random input=L_2023_clusters seed=100 npoints=1000 raster=training_pixels --overwrite
+r.random input=L_2015_reclass seed=100 npoints=1000 raster=training_pixels --overwrite
 # Then use these training pixels to perform a classification on recent Landsat image:
 # 1. RF ------------------------>
 # train a RandomForestClassifier model using r.learn.train
 r.learn.train group=L_2023 training_map=training_pixels \
-    model_name=RandomForestClassifier n_estimators=500 save_model=rf_model.gz --overwrite
+    model_name=GradientBoostingClassifier n_estimators=500 save_model=gb_model.gz --overwrite
 # perform prediction using r.learn.predict
-r.learn.predict group=L_2023 load_model=rf_model.gz output=rf_classification --overwrite
+r.learn.predict group=L_2023 load_model=gb_model.gz output=gb_classification_2023 --overwrite
 # check raster categories - they are automatically applied to the classification output
-r.category rf_classification
-# copy color scheme from landclass training map to result
-# r.colors rf_classification raster=training_pixels
+r.category gb_classification
 #
-r.contour in=shaded_relief1 out=contours levels=1,90,120,150 --o
-r.contour shaded_relief1 out=isolines step=200 --overwrite
 # display
-r.colors rf_classification color=rainbow -e
+r.colors gb_classification_2023 color=rainbow -e
 d.mon wx0
-d.rast shaded_relief1
+d.rast shaded_relief
 d.vect isolines color='100:93:134' width=0
-d.rast rf_classification
+d.rast gb_classification_2023
 d.grid -g size=00:30:00 color=white width=0.1 fontsize=16 text_color=white
-d.legend raster=rf_classification title="RF 2019" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white
-d.legend raster=shaded_relief1 title="Relief, m" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white -f
-d.out.file output=RF_2019 format=jpg --overwrite
+d.legend raster=gb_classification_2023 title="GB 2023" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white
+d.legend raster=shaded_relief title="Relief, m" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white -f
+d.out.file output=GB_2023 format=jpg --overwrite
+
+
+
 # ------------------------<
 # 2. SVM ------------------------>
 # train a SVC model using r.learn.train
