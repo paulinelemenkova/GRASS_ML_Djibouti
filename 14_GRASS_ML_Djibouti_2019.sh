@@ -91,27 +91,56 @@ r.colors shaded_relief1 color=grey
 #
 # Mapping
 g.region raster=L_2019_01 -p
-d.mon wx0
-d.rast shaded_relief1
+d.mon wx1
+d.rast shaded_relief
 d.vect isolines color='100:93:134' width=0
 d.rast L_2019_clusters
 d.grid -g size=00:30:00 color=white width=0.1 fontsize=16 text_color=white
 d.legend raster=L_2019_clusters title="Clusters 2019" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white
-d.legend raster=shaded_relief1 title="Relief, m" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white -f
+d.legend raster=shaded_relief title="Relief, m" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white -f
 d.out.file output=Djibouti_2019 format=jpg --overwrite
 #
 # Mapping rejection probability
 d.mon wx2
 g.region raster=L_2019_clusters -p
 r.colors L_2019_cluster_reject color=soilmoisture -e
-d.rast shaded_relief1
+d.rast shaded_relief
 d.vect isolines color='100:93:134' width=0
 d.rast L_2019_cluster_reject
 d.grid -g size=00:30:00 color=white width=0.1 fontsize=16 text_color=white
 d.legend raster=L_2019_cluster_reject title="2019" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white
-d.legend raster=shaded_relief1 title="Relief, m" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white -f
-d.out.file output=Djibouti_2019_reject format=jpg --overwrite
+d.legend raster=shaded_relief title="Relief, m" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white -f
+d.out.file output=Djibouti_2015_reject format=jpg --overwrite
+
+# ----------------- RENAMING CLASSES ------------------->
+echo "
+1 = 1 water
+2 = 1 water
+3 = 2 herbaceous vegetation
+4 = 3 shrubland
+5 = 4 artificial surface
+6 = 5 consolidated land
+7 = 6 grassland
+8 = 7 sparse vegetation
+9 = 8 cropland
+10 = 9 mosaic shrubland" > landusereclass.txt
+
+r.reclass input=L_2019_clusters output=L_2019_reclass \
+  rules=landusereclass.txt \
+  title="LCC 2019"
 #
+# Mapping
+r.colors L_2019_reclass color=bcyr -e
+g.region raster=L_2019_reclass -p
+d.mon wx1
+d.rast shaded_relief
+d.vect isolines color='100:93:134' width=0
+d.rast L_2019_reclass
+d.grid -g size=00:30:00 color=white width=0.1 fontsize=16 text_color=white
+d.legend raster=L_2019_reclass title="Reclass 2019" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white
+d.legend raster=shaded_relief title="Relief, m" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white -f
+d.out.file output=Djibouti_2019_reclass format=jpg --overwrite
+
 # --------------------- MACHINE LEARNING ------------------------>
 #
 # Generating training pixels from an older (1996) land cover classification:
