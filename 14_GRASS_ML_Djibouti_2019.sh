@@ -156,7 +156,7 @@ r.learn.predict group=L_2019 load_model=gb_model.gz output=gb_classification_201
 r.category gb_classification_20219
 #
 # display
-r.colors gb_classification_2019 color=plasma -e
+r.colors gb_classification_2019 color=bgyr -e
 d.mon wx0
 d.rast shaded_relief
 d.vect isolines color='100:93:134' width=0
@@ -164,7 +164,7 @@ d.rast gb_classification_2019
 d.grid -g size=00:30:00 color=white width=0.1 fontsize=16 text_color=white
 d.legend raster=gb_classification_2019 title="Gradient Boosting 2019" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white
 d.legend raster=shaded_relief title="Relief, m" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white -f
-d.out.file output=GB_2019_plasma format=jpg --overwrite
+d.out.file output=GB_2019 format=jpg --overwrite
 
 # 2. SVM ------------------------>
 # train a SVC model using r.learn.train
