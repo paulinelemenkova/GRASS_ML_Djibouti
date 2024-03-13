@@ -20,8 +20,8 @@ r.import input=/Users/polinalemenkova/grassdata/Djibouti/LC08_L2SP_166052_201507
 #
 g.list rast
 # shaded relief
-r.import input=/Users/polinalemenkova/grassdata/Djibouti/gebco_2023_1.tif output=shaded_relief1 extent=region --overwrite
-r.contour shaded_relief1 out=isolines step=200 --overwrite
+r.import input=/Users/polinalemenkova/grassdata/Djibouti/gebco_2023.tif output=shaded_relief extent=region --overwrite
+r.contour shaded_relief out=isolines step=200 --overwrite
 #
 g.list rast
 # g.remove -f type=raster name=training_pixels
@@ -87,30 +87,62 @@ i.maxlik group=L_2015 subgroup=res_30m \
   output=L_2015_clusters reject=L_2015_cluster_reject --overwrite
 #
 r.colors L_2015_clusters color=roygbiv
-r.colors shaded_relief1 color=grey
+r.colors shaded_relief color=grey
 #
 # Mapping
 g.region raster=L_2015_01 -p
 d.mon wx0
-d.rast shaded_relief1
+d.rast shaded_relief
 d.vect isolines color='100:93:134' width=0
 d.rast L_2015_clusters
 d.grid -g size=00:30:00 color=white width=0.1 fontsize=16 text_color=white
-d.legend raster=L_2015_clusters title="Clusters 2019" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white
-d.legend raster=shaded_relief1 title="Relief, m" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white -f
-d.out.file output=Djibouti_2019 format=jpg --overwrite
-#
+d.legend raster=L_2015_clusters title="Clusters 2015" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white
+d.legend raster=shaded_relief title="Relief, m" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white -f
+d.out.file output=Djibouti_2015 format=jpg --overwrite
+
 # Mapping rejection probability
 d.mon wx2
 g.region raster=L_2015_clusters -p
 r.colors L_2015_cluster_reject color=soilmoisture -e
-d.rast shaded_relief1
+d.rast shaded_relief
 d.vect isolines color='100:93:134' width=0
 d.rast L_2015_cluster_reject
 d.grid -g size=00:30:00 color=white width=0.1 fontsize=16 text_color=white
-d.legend raster=L_2015_cluster_reject title="2019" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white
-d.legend raster=shaded_relief1 title="Relief, m" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white -f
-d.out.file output=Djibouti_2019_reject format=jpg --overwrite
+d.legend raster=L_2019_cluster_reject title="2015" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white
+d.legend raster=shaded_relief title="Relief, m" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white -f
+d.out.file output=Djibouti_2015_reject format=jpg --overwrite
+#
+
+# ----------------- RENAMING CLASSES ------------------->
+echo "
+1 = 1 water
+2 = 1 water
+3 = 2 herbaceous vegetation
+4 = 3 shrubland
+5 = 4 artificial surface
+6 = 5 consolidated land
+7 = 6 grassland
+8 = 7 sparse vegetation
+9 = 8 cropland
+10 = 9 mosaic shrubland" > landusereclass.txt
+
+r.reclass input=L_2015_clusters output=L_2015_reclass \
+  rules=landusereclass.txt \
+  title="LCC 2015"
+  
+r.category L_2015_reclass
+
+# Mapping
+d.mon wx2
+g.region raster=L_2015_reclass -p
+r.colors L_2015_reclass color=roygbiv -e
+d.rast shaded_relief
+d.vect isolines color='100:93:134' width=0
+d.rast L_2015_reclass
+d.grid -g size=00:30:00 color=white width=0.1 fontsize=16 text_color=white
+d.legend raster=L_2015_reclass title="Reclass 2015" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white
+d.legend raster=shaded_relief title="Relief, m" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white -f
+d.out.file output=Djibouti_2019_reclass format=jpg --overwrite
 #
 # --------------------- MACHINE LEARNING ------------------------>
 #
