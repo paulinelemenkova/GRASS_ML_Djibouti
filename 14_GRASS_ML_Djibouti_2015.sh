@@ -142,37 +142,34 @@ d.rast L_2015_reclass
 d.grid -g size=00:30:00 color=white width=0.1 fontsize=16 text_color=white
 d.legend raster=L_2015_reclass title="Reclass 2015" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white
 d.legend raster=shaded_relief title="Relief, m" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white -f
-d.out.file output=Djibouti_2019_reclass format=jpg --overwrite
+d.out.file output=Djibouti_2015_reclass format=jpg --overwrite
 #
+
 # --------------------- MACHINE LEARNING ------------------------>
 #
-# Generating training pixels from an older (1996) land cover classification:
-r.random input=L_2015_clusters seed=100 npoints=1000 raster=training_pixels --overwrite
+# Generating training pixels from an older land cover classification:
+r.random input=L_2015_reclass seed=100 npoints=1000 raster=training_pixels --overwrite
 # Then use these training pixels to perform a classification on recent Landsat image:
 # 1. RF ------------------------>
-# train a RandomForestClassifier model using r.learn.train
+# train a model using r.learn.train
 r.learn.train group=L_2015 training_map=training_pixels \
-    model_name=RandomForestClassifier n_estimators=500 save_model=rf_model.gz --overwrite
+    model_name=GradientBoostingClassifier n_estimators=500 save_model=gb_model.gz --overwrite
 # perform prediction using r.learn.predict
-r.learn.predict group=L_2015 load_model=rf_model.gz output=rf_classification --overwrite
+r.learn.predict group=L_2015 load_model=gb_model.gz output=gb_classification_2015 --overwrite
 # check raster categories - they are automatically applied to the classification output
-r.category rf_classification
-# copy color scheme from landclass training map to result
-# r.colors rf_classification raster=training_pixels
+r.category gb_classification_2015
 #
-r.contour in=shaded_relief1 out=contours levels=1,90,120,150 --o
-r.contour shaded_relief1 out=isolines step=200 --overwrite
 # display
-r.colors rf_classification color=rainbow -e
+r.colors gb_classification_2015 color=bgyr -e
 d.mon wx0
-d.rast shaded_relief1
+d.rast shaded_relief
 d.vect isolines color='100:93:134' width=0
-d.rast rf_classification
+d.rast gb_classification_2015
 d.grid -g size=00:30:00 color=white width=0.1 fontsize=16 text_color=white
-d.legend raster=rf_classification title="RF 2019" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white
-d.legend raster=shaded_relief1 title="Relief, m" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white -f
-d.out.file output=RF_2019 format=jpg --overwrite
-# ------------------------<
+d.legend raster=gb_classification_2015 title="Gradient Boosting 2015" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white
+d.legend raster=shaded_relief title="Relief, m" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white -f
+d.out.file output=GB_2015 format=jpg --overwrite
+
 # 2. SVM ------------------------>
 # train a SVC model using r.learn.train
 r.learn.train group=L_2015 training_map=training_pixels \
