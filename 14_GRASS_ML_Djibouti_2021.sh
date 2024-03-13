@@ -92,25 +92,57 @@ r.colors shaded_relief1 color=grey
 # Mapping
 g.region raster=L_2021_01 -p
 d.mon wx0
-d.rast shaded_relief1
+d.rast shaded_relief
 d.vect isolines color='100:93:134' width=0
 d.rast L_2021_clusters
 d.grid -g size=00:30:00 color=white width=0.1 fontsize=16 text_color=white
-d.legend raster=L_2021_clusters title="Clusters 2019" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white
-d.legend raster=shaded_relief1 title="Relief, m" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white -f
-d.out.file output=Djibouti_2019 format=jpg --overwrite
+d.legend raster=L_2021_clusters title="Clusters 2021" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white
+d.legend raster=shaded_relief title="Relief, m" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white -f
+d.out.file output=Djibouti_2021 format=jpg --overwrite
 #
 # Mapping rejection probability
 d.mon wx2
 g.region raster=L_2021_clusters -p
 r.colors L_2021_cluster_reject color=soilmoisture -e
-d.rast shaded_relief1
+d.rast shaded_relief
 d.vect isolines color='100:93:134' width=0
 d.rast L_2021_cluster_reject
 d.grid -g size=00:30:00 color=white width=0.1 fontsize=16 text_color=white
-d.legend raster=L_2021_cluster_reject title="2019" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white
-d.legend raster=shaded_relief1 title="Relief, m" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white -f
-d.out.file output=Djibouti_2019_reject format=jpg --overwrite
+d.legend raster=L_2021_cluster_reject title="2021" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white
+d.legend raster=shaded_relief title="Relief, m" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white -f
+d.out.file output=Djibouti_2021_reject format=jpg --overwrite
+
+# ----------------- RENAMING CLASSES ------------------->
+echo "
+1 = 1 water
+2 = 1 water
+3 = 2 herbaceous vegetation
+4 = 3 shrubland
+5 = 4 artificial surface
+6 = 5 consolidated land
+7 = 6 grassland
+8 = 7 sparse vegetation
+9 = 8 cropland
+10 = 9 mosaic shrubland" > landusereclass.txt
+
+r.reclass input=L_2021_clusters output=L_2021_reclass \
+  rules=landusereclass.txt \
+  title="LCC 2021"
+  
+r.category L_2015_reclass
+
+# Mapping reclass
+d.mon wx2
+g.region raster=L_2021_reclass -p
+r.colors L_2021_reclass color=roygbiv -e
+d.rast shaded_relief
+d.vect isolines color='100:93:134' width=0
+d.rast L_2021_reclass
+d.grid -g size=00:30:00 color=white width=0.1 fontsize=16 text_color=white
+d.legend raster=L_2015_reclass title="Reclass 2021" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white
+d.legend raster=shaded_relief title="Relief, m" title_fontsize=19 font="Helvetica" fontsize=17 bgcolor=white border_color=white -f
+d.out.file output=Djibouti_2021_reclass format=jpg --overwrite
+#
 #
 # --------------------- MACHINE LEARNING ------------------------>
 #
